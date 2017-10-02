@@ -1,0 +1,14 @@
+image: node:8
+
+stages:
+  - build
+  - test
+
+build:
+  script:
+    - npm i reaction-cli
+
+test:
+  script:
+    - reaction init
+    - cd reaction && meteor npm install && reaction test
