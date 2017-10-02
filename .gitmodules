@@ -1,0 +1,4 @@
+[submodule "imports/plugins/custom/reaction-openbusinessbox-theme"]
+	path = imports/plugins/custom/reaction-openbusinessbox-theme
+	url = https://github.com/OpenBusinessBox/reaction-openbusinessbox-theme.git
+	branch = openbusinessbox
