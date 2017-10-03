@@ -9,7 +9,7 @@ matrix:
 before_install:
   - sudo apt-get install -yqq bsdtar
   - npm install npm -g
-  - export METEOR_VERSION=1.5.1; curl https://raw.githubusercontent.com/reactioncommerce/base/master/scripts/install-meteor.sh | bash
+  - METEOR_VERSION=1.5.1 bash $(curl https://raw.githubusercontent.com/reactioncommerce/base/master/scripts/install-meteor.sh)
   - npm i -g reaction-cli
 
 install:
