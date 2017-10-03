@@ -7,8 +7,8 @@ matrix:
     - node_js: "node"
 
 before_install:
+  - sudo apt-get install -yqq bsdtar
   - npm install npm -g
-  - apt-get install -y bsdtar
   - export METEOR_VERSION=1.5.1; curl https://raw.githubusercontent.com/reactioncommerce/base/master/scripts/install-meteor.sh | bash
   - npm i -g reaction-cli
 
