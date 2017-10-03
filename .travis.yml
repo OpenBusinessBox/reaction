@@ -7,6 +7,7 @@ matrix:
     - node_js: "node"
 
 before_install:
+  - which bash
   - sudo apt-get install -yqq bsdtar bash
   - npm install npm -g
   - METEOR_VERSION=1.5.1 bash $(curl https://raw.githubusercontent.com/reactioncommerce/base/master/scripts/install-meteor.sh)
