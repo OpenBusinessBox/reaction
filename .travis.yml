@@ -1,0 +1,18 @@
+sudo: required
+dist: trusty
+
+language: node_js
+matrix:
+  include:
+    - node_js: "node"
+
+before_install:
+  - sudo apt-get install -yqq bsdtar bash
+  - npm install npm -g
+  - .circleci/install.sh
+
+install:
+  - meteor npm install
+
+script:
+  - reaction test
