@@ -1,0 +1,27 @@
+sudo: required
+
+language: node_js
+
+services:
+  - docker
+
+matrix:
+  include:
+    - node_js: "node"
+
+before_install:
+  - docker pull node:7
+
+install:
+  - .circleci/install.sh
+  - meteor npm install
+
+script:
+  - npm test
+  - reaction test
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    .circleci/build.sh
+    .circleci/deploy.sh
+    fi
