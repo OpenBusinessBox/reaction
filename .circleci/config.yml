@@ -11,6 +11,7 @@ jobs:
       - DOCKER_VERSION: 17.03.1-ce
       - DOCKER_COMPOSE_VERSION: 1.13.0
       - METEOR_ALLOW_SUPERUSER: true
+      - TOOL_NODE_FLAGS: "--max-old-space-size=4096"
 
     steps:
       - setup_remote_docker
