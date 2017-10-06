@@ -1,3 +1,10 @@
+env:
+  - DOCKER_VERSION: 17.03.1-ce
+  - DOCKER_COMPOSE_VERSION: 1.13.0
+  - METEOR_ALLOW_SUPERUSER: true
+  - TOOL_NODE_FLAGS: "--max-old-space-size=4096"
+
+
 sudo: required
 
 language: node_js
@@ -10,10 +17,9 @@ matrix:
     - node_js: "node"
 
 before_install:
-  - docker pull node:7
+  - .circleci/install.sh
 
 install:
-  - .circleci/install.sh
   - meteor npm install
 
 script:
