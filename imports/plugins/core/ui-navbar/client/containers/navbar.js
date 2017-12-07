@@ -4,7 +4,7 @@ import { Reaction } from "/client/api";
 import NavBar from "../components/navbar";
 import { Media, Shops } from "/lib/collections";
 
-function composer(props, onData) {
+export function composer(props, onData) {
   const shop = Shops.findOne(Reaction.getShopId());
   const searchPackage = Reaction.Apps({ provides: "ui-search" });
   let searchEnabled;
@@ -19,7 +19,7 @@ function composer(props, onData) {
   }
 
   if (shop && Array.isArray(shop.brandAssets)) {
-    const brandAsset = _.find(this.getShop().brandAssets, (asset) => asset.type === "navbarBrandImage");
+    const brandAsset = _.find(shop.brandAssets, (asset) => asset.type === "navbarBrandImage");
     brandMedia = Media.findOne(brandAsset.mediaId);
   }
 

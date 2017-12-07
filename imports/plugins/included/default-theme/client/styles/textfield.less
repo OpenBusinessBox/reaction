@@ -17,6 +17,10 @@
   color: @black30;
 }
 
+.rui.textfield textarea::placeholder {
+  color: @black30;
+}
+
 .rui.textfield.center input {
   text-align: center;
 }
@@ -39,6 +43,11 @@
   padding: @padding-base-vertical @padding-base-horizontal;
   border: 1px solid @border-color;
   border-radius: @input-border-radius;
+}
+
+.action-view-body .rui.textfield input, .action-view-body .rui.textfield textarea {
+  background-color: @black02;
+  color: @rui-default-text;
 }
 
 .rui.textfield.has-error input {

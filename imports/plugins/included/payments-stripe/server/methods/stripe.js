@@ -1,13 +1,9 @@
 import accounting from "accounting-js";
 import stripeNpm from "stripe";
-
 import { Meteor } from "meteor/meteor";
 import { check } from "meteor/check";
 import { Random } from "meteor/random";
-
 import { Reaction, Logger, Hooks } from "/server/api";
-import { StripeApi } from "./stripeapi";
-
 import { Cart, Shops, Accounts, Packages } from "/lib/collections";
 
 function parseCardData(data) {
@@ -20,6 +16,7 @@ function parseCardData(data) {
   };
 }
 
+
 // Stripe uses a "Decimal-less" format so 10.00 becomes 1000
 function formatForStripe(amount) {
   return Math.round(amount * 100);
@@ -28,17 +25,33 @@ function unformatFromStripe(amount) {
   return (amount / 100);
 }
 
+export const utils = {};
+
+utils.getStripeApi = function (paymentPackageId) {
+  const stripePackage = Packages.findOne(paymentPackageId);
+  const stripeKey = stripePackage.settings.api_key || stripePackage.settings.connectAuth.access_token;
+  return stripeKey;
+};
+
+/**
+ * @summary Capture the results of a previous charge
+ * @param {object} paymentMethod - Object containing info about the previous transaction
+ * @returns {object} Object indicating the result, saved = true means success
+ */
 function stripeCaptureCharge(paymentMethod) {
   let result;
   const captureDetails = {
     amount: formatForStripe(paymentMethod.amount)
   };
 
+
+  const stripeKey = utils.getStripeApi(paymentMethod.paymentPackageId);
+  const stripe = stripeNpm(stripeKey);
+
   try {
-    const captureResult = StripeApi.methods.captureCharge.call({
-      transactionId: paymentMethod.transactionId,
-      captureDetails: captureDetails
-    });
+    const capturePromise = stripe.charges.capture(paymentMethod.transactionId, captureDetails);
+    const captureResult = Promise.await(capturePromise);
+
     if (captureResult.status === "succeeded") {
       result = {
         saved: true,
@@ -69,7 +82,7 @@ function stripeCaptureCharge(paymentMethod) {
  */
 function normalizeStatus(transaction) {
   if (!transaction) {
-    throw new Meteor.Error("normalizeStatus requires a transaction");
+    throw new Meteor.Error("invalid-parameter", "normalizeStatus requires a transaction");
   }
 
   // if this transaction failed, mode is "failed"
@@ -94,7 +107,7 @@ function normalizeStatus(transaction) {
  */
 function normalizeMode(transaction) {
   if (!transaction) {
-    throw new Meteor.Error("normalizeMode requires a transaction");
+    throw new Meteor.Error("invalid-parameter", "normalizeMode requires a transaction");
   }
 
   // if this transaction failed, mode is "failed"
@@ -120,7 +133,7 @@ function normalizeMode(transaction) {
  */
 function normalizeRiskLevel(transaction) {
   if (!transaction) {
-    throw new Meteor.Error("normalizeRiskLevel requires a transaction");
+    throw new Meteor.Error("invalid-parameter", "normalizeRiskLevel requires a transaction");
   }
 
   const outcome = transaction.outcome && transaction.outcome.risk_level;
@@ -141,16 +154,11 @@ function normalizeRiskLevel(transaction) {
 function buildPaymentMethods(options) {
   const { cardData, cartItemsByShop, transactionsByShopId } = options;
   if (!transactionsByShopId) {
-    throw new Meteor.Error("Creating a payment method log requries transaction data");
+    throw new Meteor.Error("invalid-parameter", "Creating a payment method log requries transaction data");
   }
 
   const shopIds = Object.keys(transactionsByShopId);
   const storedCard = cardData.type.charAt(0).toUpperCase() + cardData.type.slice(1) + " " + cardData.number.slice(-4);
-  const packageData = Packages.findOne({
-    name: "reaction-stripe",
-    shopId: Reaction.getPrimaryShopId()
-  });
-
   const paymentMethods = [];
 
 
@@ -164,6 +172,12 @@ function buildPaymentMethods(options) {
           shopId: shopId,
           quantity: item.quantity
         };
+      });
+
+      // we need to grab this per shop to get the API key
+      const packageData = Packages.findOne({
+        name: "reaction-stripe",
+        shopId: shopId
       });
 
       const paymentMethod = {
@@ -216,7 +230,7 @@ export const methods = {
 
     if (!stripePkg || !stripePkg.settings || !stripePkg.settings.api_key) {
       // Fail if we can't find a Stripe API key
-      throw new Meteor.Error("Attempted to create multiple stripe charges, but stripe was not configured properly.");
+      throw new Meteor.Error("not-configured", "Attempted to create multiple stripe charges, but stripe was not configured properly.");
     }
 
     const capture = transactionType === "capture";
@@ -229,14 +243,16 @@ export const methods = {
     if (!customerAccount || !Array.isArray(customerAccount.emails)) {
       // TODO: Is it okay to create random email here if anonymous?
       Logger.Error("cart email missing!");
-      throw new Meteor.Error("Email is required for marketplace checkouts.");
+      throw new Meteor.Error("invalid-parameter", "Email is required for marketplace checkouts.");
     }
 
     const defaultEmail = customerAccount.emails.find((email) => email.provides === "default");
     if (defaultEmail) {
       customerEmail = defaultEmail.address;
+    } else if (!defaultEmail) {
+      customerEmail = cart.email;
     } else {
-      throw new Meteor.Error("Customer does not have default email");
+      throw new Meteor.Error("invalid-parameter", "Customer does not have default email");
     }
 
     // Initialize stripe api lib
@@ -309,7 +325,7 @@ export const methods = {
             !merchantStripePkg.settings ||
             !merchantStripePkg.settings.connectAuth ||
             !merchantStripePkg.settings.connectAuth.stripe_user_id) {
-            throw new Meteor.Error(`Error processing payment for merchant with shopId ${shopId}`);
+            throw new Meteor.Error("server-error", `Error processing payment for merchant with shopId ${shopId}`);
           }
 
           // get stripe account for this shop
@@ -394,11 +410,9 @@ export const methods = {
       // If we get an unexpected error, log and return a censored error message
       Logger.error("Received unexpected error type: " + error.rawType);
       Logger.error(error);
-      throw new Meteor.Error("Error creating multiple stripe charges", "An unexpected error occurred");
+      throw new Meteor.Error("server-error", "An unexpected error occurred while creating multiple stripe charges");
     }
   },
-
-  // TODO: Update this method to support connect captures
   /**
    * Capture a Stripe charge
    * @see https://stripe.com/docs/api#capture_charge
@@ -407,7 +421,7 @@ export const methods = {
    */
   "stripe/payment/capture": function (paymentMethod) {
     check(paymentMethod, Reaction.Schemas.PaymentMethod);
-    // let result;
+
     const captureDetails = {
       amount: formatForStripe(paymentMethod.amount)
     };
@@ -423,7 +437,6 @@ export const methods = {
     return stripeCaptureCharge(paymentMethod);
   },
 
-  // TODO: Update this method to support connect
   /**
    * Issue a refund against a previously captured transaction
    * @see https://stripe.com/docs/api#refunds
@@ -437,15 +450,12 @@ export const methods = {
     check(amount, Number);
     check(reason, String);
 
-    const refundDetails = {
-      charge: paymentMethod.transactionId,
-      amount: formatForStripe(amount),
-      reason
-    };
-
     let result;
     try {
-      const refundResult = StripeApi.methods.createRefund.call({ refundDetails });
+      const stripeKey = utils.getStripeApi(paymentMethod.paymentPackageId);
+      const stripe = stripeNpm(stripeKey);
+      const refundPromise = stripe.refunds.create({ charge: paymentMethod.transactionId, amount: formatForStripe(amount) });
+      const refundResult = Promise.await(refundPromise);
       Logger.debug(refundResult);
       if (refundResult && refundResult.object === "refund") {
         result = {
@@ -465,12 +475,11 @@ export const methods = {
         saved: false,
         error: `Cannot issue refund: ${error.message}`
       };
-      Logger.fatal("Stripe call failed, refund was not issued");
+      Logger.fatal("Stripe call failed, refund was not issued", error.message);
     }
     return result;
   },
 
-  // Update this method to support connect
   /**
    * List refunds
    * @param  {Object} paymentMethod object
@@ -478,11 +487,19 @@ export const methods = {
    */
   "stripe/refund/list": function (paymentMethod) {
     check(paymentMethod, Reaction.Schemas.PaymentMethod);
-    let result;
+    const stripeKey = utils.getStripeApi(paymentMethod.paymentPackageId);
+    const stripe = stripeNpm(stripeKey);
+    let refundListResults;
     try {
-      const refunds = StripeApi.methods.listRefunds.call({ transactionId: paymentMethod.transactionId });
-      result = [];
-      for (const refund of refunds.data) {
+      const refundListPromise = stripe.refunds.list({ charge: paymentMethod.transactionId });
+      refundListResults = Promise.await(refundListPromise);
+    } catch (error) {
+      Logger.error("Encountered an error when trying to list refunds", error.message);
+    }
+
+    const result = [];
+    if (refundListResults && refundListResults.data) {
+      for (const refund of refundListResults.data) {
         result.push({
           type: refund.object,
           amount: refund.amount / 100,
@@ -491,9 +508,6 @@ export const methods = {
           raw: refund
         });
       }
-    } catch (error) {
-      Logger.error(error);
-      result = { error };
     }
     return result;
   }

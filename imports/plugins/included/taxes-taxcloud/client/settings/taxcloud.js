@@ -1,32 +1,15 @@
 import { Template } from "meteor/templating";
-import { AutoForm } from "meteor/aldeed:autoform";
-import { Packages } from "/lib/collections";
-import { Reaction, i18next } from "/client/api";
-import { TaxCloudPackageConfig } from "../../lib/collections/schemas";
+import { TaxCloudSettingsFormContainer } from "../containers";
 
 Template.taxCloudSettings.helpers({
-  packageConfigSchema() {
-    return TaxCloudPackageConfig;
-  },
-  packageData() {
-    return Packages.findOne({
-      name: "taxes-taxcloud",
-      shopId: Reaction.getShopId()
-    });
-  }
-});
-
-
-AutoForm.hooks({
-  "taxcloud-update-form": {
-    onSuccess: function () {
-      return Alerts.toast(i18next.t("admin.taxSettings.shopTaxMethodsSaved"),
-        "success");
-    },
-    onError: function (operation, error) {
-      return Alerts.toast(
-        `${i18next.t("admin.taxSettings.shopTaxMethodsFailed")} ${error}`, "error"
-      );
-    }
+  /**
+   * @method taxCloudForm
+   * @summary returns a component for updating the TaxCloud settings for
+   * this app.
+   * @since 1.5.2
+   * @return {Object} - an object containing the component to render.
+   */
+  taxCloudForm() {
+    return { component: TaxCloudSettingsFormContainer };
   }
 });

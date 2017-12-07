@@ -5,7 +5,7 @@ import { Meteor } from "meteor/meteor";
 import { Template } from "meteor/templating";
 import { $ } from "meteor/jquery";
 import { Roles } from "meteor/alanning:roles";
-import ManageGroups from "/imports/plugins/core/accounts/client/components/manageGroups";
+import AccountsDashboard from "/imports/plugins/core/accounts/client/containers/accountsDashboardContainer";
 import { Components } from "@reactioncommerce/reaction-components";
 
 const getPermissionMap = (permissions) => {
@@ -139,8 +139,7 @@ Template.memberSettings.helpers({
 
   accountsDetail() {
     return {
-      component: ManageGroups,
-      ...Template.currentData()
+      component: AccountsDashboard
     };
   },
 
@@ -161,7 +160,7 @@ Template.memberSettings.events({
     const permissions = [];
     const member = template.data;
     if (!this.shopId) {
-      throw new Meteor.Error("Shop is required");
+      throw new Meteor.Error("invalid-parameter", "Shop is required");
     }
     if (self.name) {
       permissions.push(self.name);

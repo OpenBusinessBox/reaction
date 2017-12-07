@@ -8,7 +8,7 @@ import { Packages } from "/lib/collections";
  * @file Shopify connector webhook methods
  *       contains methods for creating and deleting webhooks providing
  *       synchronization between a Shopify store and a Reaction shop
- * @module connectors/shopify/webhooks
+ * @module connectors-shopify
  */
 
 export const methods = {
@@ -75,7 +75,7 @@ export const methods = {
         }
       });
     } catch (error) {
-      throw new Meteor.Error("unknown-error", `Shopify API Error creating new webhook: ${error.message}`);
+      throw new Meteor.Error("server-error", `Shopify API Error creating new webhook: ${error.message}`);
     }
   },
   /**
@@ -134,7 +134,7 @@ export const methods = {
         });
       }
       // If there is another error, throw it.
-      throw new Meteor.Error("api-error", `Shopify API Error, error deleting webhook: ${error}`);
+      throw new Meteor.Error("server-error", `Shopify API Error, error deleting webhook: ${error}`);
     }
   },
   /**

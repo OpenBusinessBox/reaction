@@ -25,7 +25,7 @@ Template.registerHelper("Schemas", function () {
 /**
  * currentUser
  * @summary overrides Meteor Package.blaze currentUser method
- * @return {[Boolean]} returns true/null if user has registered
+ * @return {Boolean} returns true/null if user has registered
  */
 
 Template.registerHelper("currentUser", function () {
@@ -249,7 +249,7 @@ Template.registerHelper("condition", function (v1, operator, v2) {
     case "gte":
       return v1 >= v2;
     default:
-      throw new Meteor.Error(`Undefined conditional operator ${operator}`);
+      throw new Meteor.Error("undefined-operator", `Undefined conditional operator ${operator}`);
   }
 });
 

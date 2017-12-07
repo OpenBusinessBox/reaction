@@ -23,7 +23,7 @@ export function sendResetPasswordEmail(userId, optionalEmail) {
 
   if (!user) {
     Logger.error("sendResetPasswordEmail - User not found");
-    throw new Meteor.Error("user-not-found", "User not found");
+    throw new Meteor.Error("not-found", "User not found");
   }
 
   let email = optionalEmail;
@@ -34,9 +34,9 @@ export function sendResetPasswordEmail(userId, optionalEmail) {
   }
 
   // make sure we have a valid email
-  if (!email || !Array.includes(_.map(user.emails || [], "address"), email)) {
+  if (!email || !user.emails || !user.emails.map((mailInfo) => mailInfo.address).includes(email)) {
     Logger.error("sendResetPasswordEmail - Email not found");
-    throw new Meteor.Error("email-not-found", "Email not found");
+    throw new Meteor.Error("not-found", "Email not found");
   }
 
   // Create token for password reset
@@ -132,7 +132,7 @@ export function sendVerificationEmail(userId, email) {
 
   if (!user) {
     Logger.error("sendVerificationEmail - User not found");
-    throw new Meteor.Error("user-not-found", "User not found");
+    throw new Meteor.Error("not-found", "User not found");
   }
 
   let address = email;
@@ -146,15 +146,15 @@ export function sendVerificationEmail(userId, email) {
     if (!address) {
       const msg = "No unverified email addresses found.";
       Logger.error(msg);
-      throw new Meteor.Error("no-unverified-address", msg);
+      throw new Meteor.Error("not-found", msg);
     }
   }
 
   // make sure we have a valid address
-  if (!address || !Array.includes(_.map(user.emails || [], "address"), address)) {
+  if (!address || !user.emails || !(user.emails.map((mailInfo) => mailInfo.address).includes(address))) {
     const msg = "Email not found for user";
     Logger.error(msg);
-    throw new Meteor.Error("email-not-found", msg);
+    throw new Meteor.Error("not-found", msg);
   }
 
   const token = Random.secret();
@@ -247,7 +247,7 @@ export function sendUpdatedVerificationEmail(userId, email) {
 
   if (!user) {
     Logger.error("sendVerificationEmail - User not found");
-    throw new Meteor.Error("user-not-found", "User not found");
+    throw new Meteor.Error("not-found", "User not found");
   }
 
   let address = email;
@@ -261,15 +261,15 @@ export function sendUpdatedVerificationEmail(userId, email) {
     if (!address) {
       const msg = "No unverified email addresses found.";
       Logger.error(msg);
-      throw new Meteor.Error("no-unverified-address", msg);
+      throw new Meteor.Error("not-found", msg);
     }
   }
 
   // make sure we have a valid address
-  if (!address || !Array.includes(_.map(user.emails || [], "address"), address)) {
+  if (!address || !user.emails || !(user.emails.map((mailInfo) => mailInfo.address).includes(address))) {
     const msg = "Email not found for user";
     Logger.error(msg);
-    throw new Meteor.Error("email-not-found", msg);
+    throw new Meteor.Error("not-found", msg);
   }
 
   const token = Random.secret();

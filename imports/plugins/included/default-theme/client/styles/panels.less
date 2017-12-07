@@ -15,10 +15,6 @@
   }
 }
 
-.panel-heading {
-  text-transform: capitalize;
-}
-
 .flex-item > .panel {
   margin-bottom: 0;
   min-height: 220px;
@@ -35,6 +31,11 @@
   // box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
   box-shadow: none;
   border: @border-thin;
+}
+
+.panel-title {
+  color: @rui-default-text;
+  letter-spacing: .03rem;
 }
 
 label.panel-title {
@@ -102,6 +103,10 @@ label.panel-title {
 .panel-default > .panel-heading {
   padding: 15px 20px;
   background-color: @white;
+
+  .badge-danger {
+    background: @brand-danger;
+  }
 }
 
 .panel-md > .panel-heading {

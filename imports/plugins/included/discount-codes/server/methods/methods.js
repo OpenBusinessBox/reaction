@@ -114,7 +114,7 @@ export const methods = {
 
     // check permissions to add
     if (!Reaction.hasPermission("discount-codes")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     // if no doc, insert
     if (!docId) {
@@ -192,6 +192,24 @@ export const methods = {
     // const conditions = {
     //   enabled: true
     // };
+
+    // check to ensure discounts can only apply to single shop carts
+    // TODO: Remove this check after implementation of shop-by-shop discounts
+    const Collection = Reaction.Collections[collection];
+    const objectToApplyDiscount = Collection.findOne({ _id: id });
+    const items = objectToApplyDiscount && objectToApplyDiscount.items;
+    // loop through all items and filter down to unique shops (in order to get participating shops in the order/cart)
+    const uniqueShopObj = items.reduce((shopObj, item) => {
+      if (!shopObj[item.shopId]) {
+        shopObj[item.shopId] = true;
+      }
+      return shopObj;
+    }, {});
+    const participatingShops = Object.keys(uniqueShopObj);
+
+    if (participatingShops.length > 1) {
+      throw new Meteor.Error("not-implemented", "discounts.multiShopError", "Discounts cannot be applied to a multi-shop cart or order");
+    }
 
     // TODO: add  conditions: conditions
     const discount = Discounts.findOne({ code: code });
